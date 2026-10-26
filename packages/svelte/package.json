@@ -1,0 +1,80 @@
+{
+  "name": "@openslot/svelte",
+  "version": "0.1.0",
+  "description": "Svelte 5 calendar and resource scheduler on @openslot/core: day, week, month, list, resource and timeline views, drag and drop, keyboard moves, scheduling assistant and re-seat previews.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kryptobaseddev/openslot.git",
+    "directory": "packages/svelte"
+  },
+  "keywords": [
+    "svelte",
+    "svelte5",
+    "calendar",
+    "scheduler",
+    "resource-timeline",
+    "booking",
+    "drag-and-drop",
+    "a11y"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "svelte": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./calendar.css": "./src/calendar.css"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "svelte": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./calendar.css": "./dist/calendar.css"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "scripts": {
+    "build": "svelte-package -i src -o dist --tsconfig tsconfig.build.json",
+    "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "demo": "vite --config demo/vite.config.ts",
+    "demo:build": "vite build --config demo/vite.config.ts"
+  },
+  "peerDependencies": {
+    "svelte": "^5.57.2"
+  },
+  "dependencies": {
+    "@openslot/core": "workspace:*",
+    "motion": "14.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@sveltejs/package": "^2.5.8",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "jsdom": "^30.1.2",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.6",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}

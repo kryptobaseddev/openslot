@@ -1,0 +1,73 @@
+{
+  "$schema": "./fixture.schema.json",
+  "name": "reseat",
+  "description": "A party of 6 needs 12:00-13:00. Only r1 and r2 hold 6 and both are busy. The cheapest plan moves c to r4, then a to r3, freeing r1 (two moves). With one move allowed there is no plan.",
+  "timeZone": "UTC",
+  "now": "2030-06-10T00:00:00.000Z",
+  "resources": [
+    { "id": "r1", "title": "Resource 1", "compatKey": "studio", "capacity": { "min": 2, "max": 8 }, "order": 1 },
+    { "id": "r2", "title": "Resource 2", "compatKey": "studio", "capacity": { "min": 2, "max": 8 }, "order": 2 },
+    { "id": "r3", "title": "Resource 3", "compatKey": "studio", "capacity": { "min": 2, "max": 4 }, "order": 3 },
+    { "id": "r4", "title": "Resource 4", "compatKey": "studio", "capacity": { "min": 2, "max": 3 }, "order": 5 },
+    { "id": "lab", "title": "Lab", "compatKey": "lab", "capacity": { "min": 2, "max": 8 }, "order": 4 }
+  ],
+  "events": [
+    {
+      "id": "a",
+      "title": "a",
+      "resourceId": "r1",
+      "start": "2030-06-10T12:00:00.000Z",
+      "end": "2030-06-10T13:00:00.000Z",
+      "compatKey": "studio",
+      "size": 4
+    },
+    {
+      "id": "b",
+      "title": "b",
+      "resourceId": "r2",
+      "start": "2030-06-10T12:00:00.000Z",
+      "end": "2030-06-10T13:00:00.000Z",
+      "compatKey": "studio",
+      "size": 6
+    },
+    {
+      "id": "c",
+      "title": "c",
+      "resourceId": "r3",
+      "start": "2030-06-10T12:00:00.000Z",
+      "end": "2030-06-10T13:00:00.000Z",
+      "compatKey": "studio",
+      "size": 3
+    }
+  ],
+  "cases": [
+    {
+      "name": "two-move chain",
+      "fn": "proposeReseat",
+      "input": { "need": { "start": "2030-06-10T12:00:00.000Z", "end": "2030-06-10T13:00:00.000Z", "compatKey": "studio", "size": 6 } },
+      "expect": {
+        "resourceId": "r1",
+        "moves": [
+          { "eventId": "c", "fromResourceId": "r3", "toResourceId": "r4" },
+          { "eventId": "a", "fromResourceId": "r1", "toResourceId": "r3" }
+        ],
+        "score": 21
+      }
+    },
+    {
+      "name": "one move is not enough",
+      "fn": "proposeReseat",
+      "input": {
+        "need": { "start": "2030-06-10T12:00:00.000Z", "end": "2030-06-10T13:00:00.000Z", "compatKey": "studio", "size": 6 },
+        "maxMoves": 1
+      },
+      "expect": null
+    },
+    {
+      "name": "a small party fits r4 with no moves",
+      "fn": "proposeReseat",
+      "input": { "need": { "start": "2030-06-10T12:00:00.000Z", "end": "2030-06-10T13:00:00.000Z", "compatKey": "studio", "size": 3 } },
+      "expect": { "resourceId": "r4", "moves": [], "score": 1 }
+    }
+  ]
+}

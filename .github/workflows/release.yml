@@ -1,0 +1,55 @@
+name: Release
+
+# Manual only. Checks the version, runs every check, packs each package,
+# creates a GitHub release with RELEASE_NOTES.md and the tarballs attached,
+# then dispatches publish.yml for npm (a GITHUB_TOKEN tag push does not
+# trigger workflows). Run it only after the npm org and trusted publishers exist.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (must match every package.json), e.g. 0.1.0'
+        required: true
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check versions
+        run: |
+          for p in packages/*/package.json; do
+            v=$(node -p "require('./$p').version")
+            test "$v" = "${{ inputs.version }}" || { echo "$p is $v, not ${{ inputs.version }}"; exit 1; }
+          done
+      - run: pnpm run lint
+      - run: pnpm run check
+      - run: pnpm run test
+      - run: pnpm run build
+      - name: Pack
+        run: |
+          mkdir -p packed
+          pnpm -r --filter ./packages/core --filter ./packages/svelte exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/packed"
+          ls -l packed
+      - name: Tag and create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag "v${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}"
+          gh release create "v${{ inputs.version }}" packed/*.tgz --title "v${{ inputs.version }}" --notes-file RELEASE_NOTES.md --verify-tag
+      - name: Publish to npm
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish.yml --ref "v${{ inputs.version }}" -f tag="v${{ inputs.version }}"

@@ -1,0 +1,98 @@
+{
+  "$schema": "./fixture.schema.json",
+  "name": "conflict-with-buffer",
+  "description": "One booking 12:00-13:00 with a 15-minute buffer on both sides: 11:00 and 13:00 are refused, 10:45 and 13:15 are free. The server re-check (checkSlot) and the slot list agree.",
+  "timeZone": "UTC",
+  "now": "2030-06-10T00:00:00.000Z",
+  "hours": { "default": { "open": 600, "close": 1320 } },
+  "resources": [{ "id": "r1", "title": "Resource 1", "compatKey": "studio" }],
+  "events": [
+    {
+      "id": "e1",
+      "title": "Booked",
+      "resourceId": "r1",
+      "start": "2030-06-10T12:00:00.000Z",
+      "end": "2030-06-10T13:00:00.000Z",
+      "compatKey": "studio"
+    }
+  ],
+  "rules": { "durationMin": 60, "bufferMin": 15 },
+  "cases": [
+    {
+      "name": "13:00 is inside the trailing buffer",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T13:00:00.000Z" },
+      "expect": { "ok": false, "reason": "CONFLICT" }
+    },
+    {
+      "name": "11:00 ends inside the leading buffer",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T11:00:00.000Z" },
+      "expect": { "ok": false, "reason": "CONFLICT" }
+    },
+    {
+      "name": "10:45 ends exactly at the buffer",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T10:45:00.000Z" },
+      "expect": { "ok": true, "resourceId": "r1" }
+    },
+    {
+      "name": "13:15 starts exactly after the buffer",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T13:15:00.000Z" },
+      "expect": { "ok": true, "resourceId": "r1" }
+    },
+    {
+      "name": "the same event being rescheduled does not block itself",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T12:30:00.000Z", "excludeIds": ["e1"] },
+      "expect": { "ok": true, "resourceId": "r1" }
+    },
+    {
+      "name": "before opening",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T09:30:00.000Z" },
+      "expect": { "ok": false, "reason": "CLOSED" }
+    },
+    {
+      "name": "inside the lead time",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T14:00:00.000Z", "now": "2030-06-10T13:30:00.000Z", "leadMin": 60 },
+      "expect": { "ok": false, "reason": "LEAD_TIME" }
+    },
+    {
+      "name": "past the horizon",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-20T14:00:00.000Z", "horizonDays": 7 },
+      "expect": { "ok": false, "reason": "HORIZON" }
+    },
+    {
+      "name": "wrong compatKey",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T14:00:00.000Z", "compatKey": "lab" },
+      "expect": { "ok": false, "reason": "NO_RESOURCE" }
+    },
+    {
+      "name": "a blackout closes the resource",
+      "fn": "checkSlot",
+      "input": {
+        "start": "2030-06-10T15:00:00.000Z",
+        "blackouts": [{ "start": "2030-06-10T15:30:00.000Z", "end": "2030-06-10T16:00:00.000Z", "resourceId": "r1" }]
+      },
+      "expect": { "ok": false, "reason": "BLACKOUT" }
+    },
+    {
+      "name": "the slot list skips the booking and both buffers",
+      "fn": "generateSlots",
+      "input": { "from": "2030-06-10", "stepMin": 15, "limit": 6 },
+      "expect": [
+        { "start": "2030-06-10T10:00:00.000Z", "end": "2030-06-10T11:00:00.000Z", "resourceIds": ["r1"] },
+        { "start": "2030-06-10T10:15:00.000Z", "end": "2030-06-10T11:15:00.000Z", "resourceIds": ["r1"] },
+        { "start": "2030-06-10T10:30:00.000Z", "end": "2030-06-10T11:30:00.000Z", "resourceIds": ["r1"] },
+        { "start": "2030-06-10T10:45:00.000Z", "end": "2030-06-10T11:45:00.000Z", "resourceIds": ["r1"] },
+        { "start": "2030-06-10T13:15:00.000Z", "end": "2030-06-10T14:15:00.000Z", "resourceIds": ["r1"] },
+        { "start": "2030-06-10T13:30:00.000Z", "end": "2030-06-10T14:30:00.000Z", "resourceIds": ["r1"] }
+      ]
+    }
+  ]
+}

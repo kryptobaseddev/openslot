@@ -8,3 +8,4 @@ playwright-report
 .env.*
 vite.config.ts.timestamp-*
 .svelte-kit
+demo-dist

@@ -1,0 +1,53 @@
+{
+  "name": "@openslot/core",
+  "version": "0.1.0",
+  "description": "Framework-neutral calendar and booking scheduling: time zones and DST, slot generation, occupancy, staff coverage, re-seat and swap proposals, layout and drag math. Pure TypeScript, no DOM, no I/O.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kryptobaseddev/openslot.git",
+    "directory": "packages/core"
+  },
+  "keywords": [
+    "calendar",
+    "scheduling",
+    "booking",
+    "slots",
+    "timezone",
+    "dst",
+    "resource-scheduler"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

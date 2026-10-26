@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kryptobaseddev/openslot/fixtures/fixture.schema.json",
+  "title": "OpenSlot shared fixture",
+  "description": "A scenario both adapters and the core test against. Top-level data is shared by every case; a case's input is merged over it (case wins).",
+  "type": "object",
+  "required": ["name", "description", "timeZone", "cases"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "description": { "type": "string" },
+    "timeZone": { "type": "string", "description": "IANA zone" },
+    "now": { "type": "string", "format": "date-time" },
+    "hours": { "$ref": "#/$defs/hoursSpec" },
+    "resources": { "type": "array", "items": { "$ref": "#/$defs/resource" } },
+    "events": { "type": "array", "items": { "$ref": "#/$defs/event" } },
+    "blackouts": { "type": "array", "items": { "$ref": "#/$defs/blackout" } },
+    "staff": {
+      "type": "object",
+      "required": ["spans"],
+      "properties": {
+        "perBooking": { "type": "integer", "minimum": 1 },
+        "spans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["userId", "kind", "start", "end"],
+            "properties": {
+              "userId": { "type": "string" },
+              "kind": { "enum": ["shift", "time_off"] },
+              "start": { "type": "string" },
+              "end": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "rules": { "type": "object", "description": "SlotRules shared by the cases (durationMin, bufferMin, leadMin, ...)" },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "fn", "input", "expect"],
+        "properties": {
+          "name": { "type": "string" },
+          "fn": {
+            "enum": [
+              "generateSlots",
+              "checkSlot",
+              "findOpenSlots",
+              "proposeReseat",
+              "proposeConflictResolution",
+              "dayCoverage",
+              "zonedToIso"
+            ]
+          },
+          "input": { "type": "object" },
+          "expect": { "description": "Matched as a subset: listed fields must equal, arrays must have the same length." }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "dayHours": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["open", "close"],
+          "properties": {
+            "open": { "type": "integer", "minimum": 0, "maximum": 1440 },
+            "close": { "type": "integer", "minimum": 0, "maximum": 1440 }
+          }
+        }
+      ]
+    },
+    "hoursSpec": {
+      "type": "object",
+      "properties": {
+        "weekly": { "type": "object", "patternProperties": { "^[0-6]$": { "$ref": "#/$defs/dayHours" } }, "additionalProperties": false },
+        "dates": { "type": "object", "additionalProperties": { "$ref": "#/$defs/dayHours" } },
+        "default": { "$ref": "#/$defs/dayHours" }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "compatKey": { "type": "string" },
+        "capacity": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": { "min": { "type": "integer" }, "max": { "type": "integer" } }
+        },
+        "order": { "type": "number" }
+      }
+    },
+    "event": {
+      "type": "object",
+      "required": ["id", "title", "start", "end"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "start": { "type": "string" },
+        "end": { "type": "string" },
+        "resourceId": { "type": "string" },
+        "compatKey": { "type": "string" },
+        "size": { "type": "integer" },
+        "pinned": { "type": "boolean" },
+        "editable": { "type": "boolean" }
+      }
+    },
+    "blackout": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": { "start": { "type": "string" }, "end": { "type": "string" }, "resourceId": { "type": "string" } }
+    }
+  }
+}

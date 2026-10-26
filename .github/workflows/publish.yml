@@ -1,0 +1,64 @@
+name: Publish
+
+# Publishes @openslot/core and @openslot/svelte to npm with trusted publishing
+# (OIDC) and provenance; no token secret. On npmjs.com each package needs a
+# trusted publisher: organization openslot, repository kryptobaseddev/openslot,
+# workflow publish.yml, environment npm.
+# Runs on a pushed v* tag, or when release.yml dispatches it.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish, e.g. v0.1.0'
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          registry-url: 'https://registry.npmjs.org'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Tag matches every published package version
+        run: |
+          for p in core svelte; do
+            test "v$(node -p "require('./packages/$p/package.json').version")" = "${{ inputs.tag || github.ref_name }}"
+          done
+      - run: pnpm run check
+      - run: pnpm run test
+      - run: pnpm run build
+      # pnpm pack applies publishConfig and turns workspace:* into the real
+      # version; npm (>= 11.5.1) publishes the tarball and does the OIDC exchange.
+      # Core goes first because svelte depends on it.
+      - name: Pack and publish
+        run: |
+          mkdir -p packed
+          for p in core svelte; do
+            name=$(node -p "require('./packages/$p/package.json').name")
+            version=$(node -p "require('./packages/$p/package.json').version")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version is already on npm; skipping"
+              continue
+            fi
+            (cd "packages/$p" && pnpm pack --pack-destination "$GITHUB_WORKSPACE/packed")
+            npm publish "packed/$(echo "$name" | sed 's/@//; s#/#-#')-$version.tgz" --access public --provenance
+          done

@@ -1,0 +1,77 @@
+{
+  "$schema": "./fixture.schema.json",
+  "name": "staff-shortfall",
+  "description": "Two resources, fewer staff than resources for most of the day. Ana works 10-18, Ben 12-20 with 15-16 off, one booking runs 10-11. A slot lists only as many resources as the staff on shift can still run; nobody covers 20-22.",
+  "timeZone": "UTC",
+  "now": "2030-06-10T00:00:00.000Z",
+  "hours": { "default": { "open": 600, "close": 1320 } },
+  "resources": [
+    { "id": "r1", "title": "Resource 1", "compatKey": "studio", "order": 1 },
+    { "id": "r2", "title": "Resource 2", "compatKey": "studio", "order": 2 }
+  ],
+  "events": [
+    {
+      "id": "e1",
+      "title": "Booked",
+      "resourceId": "r1",
+      "start": "2030-06-10T10:00:00.000Z",
+      "end": "2030-06-10T11:00:00.000Z",
+      "compatKey": "studio"
+    }
+  ],
+  "staff": {
+    "perBooking": 1,
+    "spans": [
+      { "userId": "ana", "kind": "shift", "start": "2030-06-10T10:00:00.000Z", "end": "2030-06-10T18:00:00.000Z" },
+      { "userId": "ben", "kind": "shift", "start": "2030-06-10T12:00:00.000Z", "end": "2030-06-10T20:00:00.000Z" },
+      { "userId": "ben", "kind": "time_off", "start": "2030-06-10T15:00:00.000Z", "end": "2030-06-10T16:00:00.000Z" }
+    ]
+  },
+  "rules": { "durationMin": 60 },
+  "cases": [
+    {
+      "name": "slots are capped by staff on shift",
+      "fn": "generateSlots",
+      "input": { "from": "2030-06-10", "stepMin": 60 },
+      "expect": [
+        { "start": "2030-06-10T11:00:00.000Z", "resourceIds": ["r1"] },
+        { "start": "2030-06-10T12:00:00.000Z", "resourceIds": ["r1", "r2"] },
+        { "start": "2030-06-10T13:00:00.000Z", "resourceIds": ["r1", "r2"] },
+        { "start": "2030-06-10T14:00:00.000Z", "resourceIds": ["r1", "r2"] },
+        { "start": "2030-06-10T15:00:00.000Z", "resourceIds": ["r1"] },
+        { "start": "2030-06-10T16:00:00.000Z", "resourceIds": ["r1", "r2"] },
+        { "start": "2030-06-10T17:00:00.000Z", "resourceIds": ["r1", "r2"] },
+        { "start": "2030-06-10T18:00:00.000Z", "resourceIds": ["r1"] },
+        { "start": "2030-06-10T19:00:00.000Z", "resourceIds": ["r1"] }
+      ]
+    },
+    {
+      "name": "10:00 on r2: Ana is busy with e1",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T10:00:00.000Z", "resourceId": "r2" },
+      "expect": { "ok": false, "reason": "STAFF" }
+    },
+    {
+      "name": "20:00: nobody on shift",
+      "fn": "checkSlot",
+      "input": { "start": "2030-06-10T20:00:00.000Z" },
+      "expect": { "ok": false, "reason": "STAFF" }
+    },
+    {
+      "name": "the assistant checks each resource alone: at 11:00 it lists both, though Ana can run one (phase 1 behaviour; generateSlots caps)",
+      "fn": "findOpenSlots",
+      "input": { "from": "2030-06-10", "to": "2030-06-10", "compatKey": "studio", "stepMin": 60, "limit": 3 },
+      "expect": [
+        { "resourceId": "r1", "start": "2030-06-10T11:00:00.000Z" },
+        { "resourceId": "r2", "start": "2030-06-10T11:00:00.000Z" },
+        { "resourceId": "r1", "start": "2030-06-10T12:00:00.000Z" }
+      ]
+    },
+    {
+      "name": "the day badge flags the uncovered evening",
+      "fn": "dayCoverage",
+      "input": { "date": "2030-06-10" },
+      "expect": { "onShift": 2, "gapMin": 120, "tone": "gap", "label": "2 staff, gaps" }
+    }
+  ]
+}
