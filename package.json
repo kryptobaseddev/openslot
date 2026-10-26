@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "test": "pnpm -r run test",
     "test:e2e": "pnpm --filter @openslot/svelte run test:e2e",
-    "demo": "pnpm --filter @openslot/svelte run demo"
+    "demo": "pnpm --filter @openslot/svelte run demo",
+    "demo:build": "pnpm --filter @openslot/svelte run demo:build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

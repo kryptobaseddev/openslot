@@ -1,9 +1,9 @@
 name: Release
 
-# Manual only. Checks the version, runs every check, packs each package and
-# creates a GitHub release with RELEASE_NOTES.md and the tarballs attached.
-# It does not publish to npm: the packages stay private until the owner
-# creates the @openslot scope and approves a publish workflow.
+# Manual only. Checks the version, runs every check, packs each package,
+# creates a GitHub release with RELEASE_NOTES.md and the tarballs attached,
+# then dispatches publish.yml for npm (a GITHUB_TOKEN tag push does not
+# trigger workflows). Run it only after the npm org and trusted publishers exist.
 on:
   workflow_dispatch:
     inputs:
@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   release:
@@ -48,3 +49,7 @@ jobs:
           git tag "v${{ inputs.version }}"
           git push origin "v${{ inputs.version }}"
           gh release create "v${{ inputs.version }}" packed/*.tgz --title "v${{ inputs.version }}" --notes-file RELEASE_NOTES.md --verify-tag
+      - name: Publish to npm
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish.yml --ref "v${{ inputs.version }}" -f tag="v${{ inputs.version }}"

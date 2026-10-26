@@ -237,8 +237,10 @@ Phase 1 fixtures: `dst-day`, `conflict-with-buffer`, `staff-shortfall`, `reseat`
 ## 7. Versioning and releases
 
 - Semantic versioning. All packages move in lockstep while below 1.0; a minor bump may break the API until 1.0, and the release notes say so.
-- Packages are `private: true` until the owner creates the `@openslot` npm scope and approves the first publish. Nothing publishes to npm from this repository yet.
-- `release.yml` runs only on manual dispatch: it checks the version, runs lint, typecheck, tests and builds, packs tarballs and creates a GitHub release with `RELEASE_NOTES.md`. It has no npm step.
+- `@openslot/core` and `@openslot/svelte` publish to npm under the `@openslot` organisation; `@openslot/react` stays `private: true` while it is a stub.
+- `release.yml` runs only on manual dispatch: it checks the version, runs lint, typecheck, tests and builds, packs tarballs, tags, creates a GitHub release with `RELEASE_NOTES.md`, and dispatches `publish.yml`.
+- `publish.yml` publishes with npm trusted publishing (OIDC, environment `npm`) and provenance; no npm token is stored. It packs with pnpm (applying `publishConfig` and the `workspace:*` versions) and publishes core before svelte, skipping a version already on npm.
+- The Svelte demo deploys to GitHub Pages from `main` (`pages.yml`): https://kryptobaseddev.github.io/openslot/
 - In the repository, packages export their TypeScript source; `publishConfig` switches the exports to built `dist/` files at publish time.
 - CI runs on GitHub-hosted runners (public repository; free minutes). Self-hosted runners must never run pull requests from forks of this public repository.
 

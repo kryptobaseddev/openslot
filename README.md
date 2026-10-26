@@ -7,7 +7,9 @@
 
 OpenSlot covers FullCalendar-style views (day, week, month, agenda, resource lanes and timelines, with drag, resize and keyboard moves) and the scheduling rules a booking product needs: slot generation with buffers, lead time and horizon, exact times or arrival windows, blackouts, pooled resources, staff coverage, conflict detection and re-seat proposals. All rules live in a pure TypeScript core that runs the same in the browser and on your server.
 
-> Status: **0.1, unreleased.** Phase 1 (a port of a calendar running in production at EscapePlan) is in this repository. Nothing is on npm yet.
+> Status: **0.1.** Phase 1 (a port of a calendar running in production at EscapePlan) is in this repository. **[Live Svelte demo →](https://kryptobaseddev.github.io/openslot/)**
+>
+> npm: `@openslot/core` and `@openslot/svelte` 0.1.0 are published once the `@openslot` npm organisation is set up. Until then, the core installs from git as TypeScript source (for Vite or TS-aware bundlers): `pnpm add "github:kryptobaseddev/openslot#main&path:/packages/core"`.
 
 ## Packages
 

@@ -1,7 +1,6 @@
 {
   "name": "@openslot/core",
   "version": "0.1.0",
-  "private": true,
   "description": "Framework-neutral calendar and booking scheduling: time zones and DST, slot generation, occupancy, staff coverage, re-seat and swap proposals, layout and drag math. Pure TypeScript, no DOM, no I/O.",
   "license": "MIT",
   "type": "module",
@@ -30,6 +29,8 @@
     }
   },
   "publishConfig": {
+    "access": "public",
+    "provenance": true,
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
